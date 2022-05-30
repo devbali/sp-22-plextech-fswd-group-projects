@@ -4,6 +4,17 @@ from time import time, sleep
 
 url = "http://127.0.0.1:5001"
 
+sample_pleet = {
+        "pleet_id": "45be55eb-27d1-4350-8d51-9ca2512229ea",
+        "user": {
+            "user_id": "714edd71-799d-4c25-bb55-9dba9b095ae9",
+            "display name": "Dev Bali",
+            "username": "devbali"
+        },
+        "text": "Sample pleet",
+        "datetime": 1642567497
+    }
+
 @pytest.fixture
 def cleanup():
     requests.post(f"{url}/reset")
@@ -105,8 +116,16 @@ def test_put_edit_profile():
     assert "message" in response, "Wrong format in update user"
     assert response["message"] == "User Profile Successfully edited!"
 
+    ## Test Get One tests this with many more asserts
+    r = requests.post(f"{url}/pleets", data={"username": "devbali","text":"New pleet"})
+    pleet_id = r.json()["pleet_id"]
+    r = requests.get(f"{url}/pleets/{pleet_id}")
+    response = r.json()
+    assert response["user"]["display name"] == "New Dev Bali"
+
 @pytest.mark.usefixtures("cleanup")
 def test_get_one():
+
     r = requests.post(f"{url}/pleets", data={"username": "incorrectusername","text":"New pleet"})
     assert r.status_code == 404, "Status code should be 404"
     r = requests.post(f"{url}/pleets", data={"username": "devbali","text":"New pleet"})
@@ -125,7 +144,6 @@ def test_get_one():
     assert response["text"] == "New pleet"
     # Date time of the pleet should be very close to current datetime
     assert response["datetime"] > time() - 20 and response["datetime"] <= time()
-    assert response["user"]["display name"] == "New Dev Bali"
     assert response["user"]["username"] == "devbali"
     assert response["user"]["user_id"] == sample_pleet["user"]["user_id"]
 
